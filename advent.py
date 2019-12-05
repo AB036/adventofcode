@@ -6,9 +6,14 @@ import hashlib
 import collections
 import copy
 import math
+import queue
 
 abc = string.ascii_lowercase
 ABC = string.ascii_uppercase
+
+fifo = queue.Queue
+lifo = queue.LifoQueue
+minq = queue.PriorityQueue
 
 
 def get_input(lines = False):
@@ -30,6 +35,7 @@ def get_ex(lines = False):
 def get_numbers(arg):
     if type(arg) == str:
         line = arg.replace(',', ' ')
+        line = line.replace('\n', ' ')
         for char in string.punctuation.replace('-', '') + abc + ABC:
             line = line.replace(char, ' ')
         return tuple( int(e) for e in line.split(' ') if e)
@@ -80,3 +86,5 @@ def prod(se):
     for e in se:
         p *= e
     return p
+
+
