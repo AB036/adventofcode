@@ -87,4 +87,20 @@ def prod(se):
         p *= e
     return p
 
+def print_fifo(f):
+    n = f.qsize()
+    s = "head => ["
+    for k in range(n):
+        e = f.get_nowait()
+        s += str(e) + (", " if k != n-1 else "")
+        f.put(e)
+    s += "]"
+    print(s + " <= tail")
 
+def pgcd(a,b):
+    a,b = abs(a),abs(b)
+    if b > a:
+        return pgcd(b,a)
+    if b == 0:
+        return a
+    return pgcd(b, a%b)
