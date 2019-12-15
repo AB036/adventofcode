@@ -49,6 +49,7 @@ class process:
         
         self.alive = True
         self.waiting = False
+        self.output = False
         
     def __input(self):
         if self.fifo.empty():
@@ -61,6 +62,7 @@ class process:
         return v
     
     def __output(self, value):
+        self.output = True
         if self.printt:
             print(self.name + ":", value)
         if self.output_func:
@@ -99,6 +101,11 @@ class process:
         self.step()
         while self.alive and not self.waiting:
             self.step()
+    
+    def run_until_output(self):
+        while not self.output and self.alive:
+            self.step()
+        self.output = False
     
     def step(self):
         k = self.k
