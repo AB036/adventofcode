@@ -104,3 +104,21 @@ def pgcd(a,b):
     if b == 0:
         return a
     return pgcd(b, a%b)
+
+def turn_left(c):
+    if c in "<>v^":
+        return {"<":"v", ">":"^", "v":">", "^":"<"}[c]
+    if c in "udlr":
+        return {"l":"d", "r":"u", "d":"r", "u":"l"}[c]
+    if c in "UDLR":
+        return {"L":"D", "R":"U", "D":"R", "U":"L"}[c]
+    raise ValueError("Unexepected argument: " + str(c))
+    
+def turn_right(c):
+    if c in "<>v^":
+        return {">":"v", "<":"^", "^":">", "v":"<"}[c]
+    if c in "udlr":
+        return {"l":"u", "r":"d", "d":"l", "u":"r"}[c]
+    if c in "UDLR":
+        return {"L":"U", "R":"D", "D":"L", "U":"R"}[c]
+    raise ValueError("Unexepected argument: " + str(c))

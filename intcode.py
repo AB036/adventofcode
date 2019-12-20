@@ -103,6 +103,7 @@ class process:
             self.step()
     
     def run_until_output(self):
+        self.output = False
         while not self.output and self.alive:
             self.step()
         self.output = False

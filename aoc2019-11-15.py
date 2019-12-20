@@ -140,93 +140,102 @@ def day13():
     
     print(score)
 
-"""
-arg = get_input(1)
-d = dict()
-
-for line in arg:
-    a,b = line.split(' => ')
-    l = a.split(', ')
-    l2 = b.split(' ')
-    d[l2[1]] = (int(l2[0]),)
-    for aa in l:
-        aaa,bbb = aa.split(' ')
-        d[l2[1]] += (int(aaa), bbb)
-
-        
-def make(number, element):
-    if element == "ORE":
-        return number
+def day14():
+    arg = get_input(1)
+    d = dict()
     
-    batch = d[element][0]
-
-    if number%batch == 0:
-        n_batch = number//batch
-    else:
-        n_batch = number//batch + 1
+    for line in arg:
+        a,b = line.split(' => ')
+        l = a.split(', ')
+        l2 = b.split(' ')
+        d[l2[1]] = (int(l2[0]),)
+        for aa in l:
+            aaa,bbb = aa.split(' ')
+            d[l2[1]] += (int(aaa), bbb)
+    
+            
+    def make(number, element):
+        if element == "ORE":
+            return number
         
-    n = (len(d[element])-1)//2
-    s = 0
-
-    for k in range(n):
-        e_needed = d[element][2 + 2*k]
-        n_needed = n_batch*d[element][1+2*k]
-        av = available[e_needed]
-        if av >= n_needed:
-            available[e_needed] -= n_needed
+        batch = d[element][0]
+    
+        if number%batch == 0:
+            n_batch = number//batch
         else:
-            available[e_needed] = 0
-            s += make(n_needed-av, e_needed)
-
-    available[element] += n_batch*batch - number
-    return s
-
-available = defdict(0)
-a = make(1, "FUEL")
-print("p1 :",a)
-
-trillion = 1000000000000
-
-upper_bound = 1000*trillion//a
-lower_bound = trillion//a
-
-while upper_bound - lower_bound > 100:
-    m = (lower_bound + upper_bound)//2
+            n_batch = number//batch + 1
+            
+        n = (len(d[element])-1)//2
+        s = 0
+    
+        for k in range(n):
+            e_needed = d[element][2 + 2*k]
+            n_needed = n_batch*d[element][1+2*k]
+            av = available[e_needed]
+            if av >= n_needed:
+                available[e_needed] -= n_needed
+            else:
+                available[e_needed] = 0
+                s += make(n_needed-av, e_needed)
+    
+        available[element] += n_batch*batch - number
+        return s
+    
+    available = defdict(0)
+    a = make(1, "FUEL")
+    print("p1 :",a)
+    
+    trillion = 1000000000000
+    
+    upper_bound = 1000*trillion//a
+    lower_bound = trillion//a
+    
+    while upper_bound - lower_bound > 100:
+        m = (lower_bound + upper_bound)//2
+        available = defdict(0)
+        cost = make(m, "FUEL")
+        if cost > trillion:
+            upper_bound = m
+        else:
+            lower_bound = m
+            
+    m = lower_bound
     available = defdict(0)
     cost = make(m, "FUEL")
-    if cost > trillion:
-        upper_bound = m
-    else:
-        lower_bound = m
-        
-cost = 0
-m = lower_bound
-while cost < trillion:
-    available = defdict(0)
-    m += 1
-    cost = make(m, "FUEL")
+    while cost < trillion:
+        m += 1
+        cost += make(1, "FUEL")
+    
+    print("p2 :", m-1)
 
-print("p2 :", m-1)
 
-"""
 
 
 arg = get_input()
 num = get_numbers(arg)
 
-"""
-import intcode
 
+import intcode
 pro = intcode.process(num, printt=False)
 f = fifo()
 pro.out(f)
 
 grid = dict()
-x,y = 0,0
 grid[(0,0)] = 1
+x,y = 0,0
+
+pile = lifo()
+pile.put((0,0))
+
+routing = dict()
+
+while not pile.empty():
+    target = pile.get()
+    while 1:
+        
 
 
-
+"""
 for u in range(1000000):
     k = random.choice((1,2,3,4))
     xx,yy = {1:(x,y-1), 2:(x,y+1), 3:(x-1,y), 4:(x+1,y)}[k]
@@ -241,7 +250,7 @@ for u in range(1000000):
     elif st == 2:
         grid[(xx,yy)] = 2
         x,y = xx,yy
-"""       
+    
 
 
 
@@ -263,7 +272,7 @@ for y in range(my, My+1):
             s += "?"
     print(s)
  
-"""
+
 pile = [(0,0,0)]
 seen = set()
 
@@ -280,7 +289,7 @@ while pile:
                 break
             elif grid[(xx,yy)] == 1:
                 pile.append((xx,yy,s+1))
-"""
+
 arg = get_ex(1)
 
 grid = dict()
@@ -314,3 +323,4 @@ while frontier:
     frontier = new.copy()
     if frontier:
         step += 1
+"""
