@@ -26,13 +26,22 @@ const Bags = struct {
 };
 
 
-pub fn count_bags(comptime T: type, map: *T, color: []const u8) u32 {
+const RecursionError = error {
+    OutOfMemory,
+};
+
+
+pub fn count_bags(cache: anytype, map: anytype, color: []const u8) RecursionError!u32 {
+    if (cache.contains(color)) {
+        return cache.get(color).?;
+    }
     var count: u32 = 0;
-    var bags = map.get(color) orelse return 1;
+    var bags = map.get(color).?;
     for (bags) |bag| {
         count += if (bag.n == 0) 0
-                 else bag.n * count_bags(T, map, bag.color);
+                 else bag.n * try count_bags(cache, map, bag.color);
     }
+    try cache.put(color, 1 + count);
     return 1 + count;
 }
 
@@ -46,9 +55,8 @@ pub fn main() !void {
     //var lines = try read_lines("test.txt", allocator);
 
     // Parsing
-    var dummy = std.ArrayList(Bags).init(allocator);
     var map = std.StringHashMap([]Bags).init(allocator);
-    var bag_inside = std.StringHashMap(@TypeOf(dummy)).init(allocator);
+    var bag_inside = std.StringHashMap(std.ArrayList(Bags)).init(allocator);
     for (lines) |line| {
         var ite = std.mem.split(line, " bags contain ");
         const color = ite.next().?;
@@ -58,7 +66,8 @@ pub fn main() !void {
         while (ite2.next()) |token| {
             var space: usize = 0;
             while (token[space] != ' ') {space += 1;}
-            const n_bags: u32 = if (rest[0] != 'n') try std.fmt.parseInt(u32, token[0..space], 10)
+            const n_bags: u32 = if (rest[0] != 'n')
+                                    try std.fmt.parseInt(u32, token[0..space], 10)
                                 else 0;
             var ite3 = std.mem.split(token, " bag");
             const color2 = ite3.next().?[space+1 ..];
@@ -68,7 +77,6 @@ pub fn main() !void {
         }
         try map.put(color, bags.toOwnedSlice());
     }
-
     // map is a direct mapping of the input
     // bag_inside is the same but reversed
 
@@ -92,7 +100,8 @@ pub fn main() !void {
         }
     }
 
-    var answer2: u32 = count_bags(@TypeOf(map), &map, "shiny gold");
+    var cache = std.StringHashMap(u32).init(allocator);
+    var answer2: u32 = try count_bags(&cache, &map, "shiny gold");
     print("Part 1: {}\n", .{answer-1});  // minus 1 because the first bag doesn't count
     print("Part 2: {}\n", .{answer2-1}); // same
 }
