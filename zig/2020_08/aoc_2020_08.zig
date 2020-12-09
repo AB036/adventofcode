@@ -62,18 +62,13 @@ pub fn main() !void {
     while (i < op.len) {
         if (seen.contains(i)) {break;}
         try seen.put(i, undefined);
-        if (op[i].code == Opcode.acc) {
-            accu += op[i].param;
-            i += 1;
-        }
+        if (op[i].code == Opcode.acc) {accu += op[i].param; i += 1;}
         else if (op[i].code == Opcode.jmp) {
             var i_i64 = @intCast(i64, i) + op[i].param;
             if (i_i64 < 0) {break;}
             i = @intCast(usize, i_i64);
         }
-        else if (op[i].code == Opcode.nop) {
-            i += 1;
-        }
+        else if (op[i].code == Opcode.nop) {i += 1;}
     }
     print("Part 1: {}\n", .{accu});
 
@@ -86,18 +81,13 @@ pub fn main() !void {
         while (i < op.len) {
             if (seen.contains(i)) {break;} // seeing the same instruction twice: infinite looping
             try seen.put(i, undefined);
-            if (op[i].code == Opcode.acc) {
-                accu += op[i].param;
-                i += 1;
-            }
+            if (op[i].code == Opcode.acc) {accu += op[i].param; i += 1;}
             else if (op[i].code == Opcode.jmp and i != k_jmp) {
                 var i_i64 = @intCast(i64, i) + op[i].param;
                 if (i_i64 < 0) {break;}
                 i = @intCast(usize, i_i64);
             }
-            else if (op[i].code == Opcode.nop or i == k_jmp) {
-                i += 1;
-            }
+            else if (op[i].code == Opcode.nop or i == k_jmp) {i += 1;}
         }
         else {print("Part 2: {}\n", .{accu});} // if exiting the while without breaking
     }
