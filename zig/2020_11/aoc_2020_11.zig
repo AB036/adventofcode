@@ -27,10 +27,6 @@ pub fn main() !void {
     defer arena.deinit();
     const allocator = &arena.allocator;
 
-    for (0 .. 10) |token| {
-        print("{}\n", .{token});
-    }
-
     var lines = try read_lines("input.txt", allocator);
     //var lines = try read_lines("test.txt", allocator);
 
