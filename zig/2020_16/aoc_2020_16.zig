@@ -48,9 +48,7 @@ pub fn main() !void {
         const d = try std.fmt.parseInt(u64, rule[dash2+1 ..], 10);
         try rules.append(.{a,b,c,d});
 
-        if (std.mem.eql(u8, rule[0..9], "departure")) {
-            try dep_rule_indices.append(i);
-        }
+        if (std.mem.eql(u8, rule[0..9], "departure")) { try dep_rule_indices.append(i); }
     }
 
     const ur_ticket_str = lines[1][13..];
