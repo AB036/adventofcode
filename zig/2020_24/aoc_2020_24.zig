@@ -36,12 +36,12 @@ pub fn main() !void {
             var j = i+1;
             defer i = j;
             if (line[i] == 'n' or line[i] == 's') {j += 1;}
-            if (line[i] == 'e') {x += 1; y -= 1;}
-            else if (line[i] == 'w') {x -= 1; y += 1;}
-            else if (std.mem.eql(u8, line[i..j], "ne")) {x += 1;}
-            else if (std.mem.eql(u8, line[i..j], "sw")) {x -= 1;}
-            else if (std.mem.eql(u8, line[i..j], "nw")) {y += 1;}
-            else if (std.mem.eql(u8, line[i..j], "se")) {y -= 1;}
+            if (line[i] == 'e') {x += 1;}
+            else if (line[i] == 'w') {x -= 1;}
+            else if (std.mem.eql(u8, line[i..j], "ne")) {y -= 1;}
+            else if (std.mem.eql(u8, line[i..j], "sw")) {y += 1;}
+            else if (std.mem.eql(u8, line[i..j], "nw")) {x -= 1; y -= 1;}
+            else if (std.mem.eql(u8, line[i..j], "se")) {x += 1; y += 1;}
         }
 
         if (!tiles.contains(.{x,y})) { try tiles.put(.{x,y}, true); N += 1;}
@@ -55,13 +55,13 @@ pub fn main() !void {
 
     var day: u32 = 0;
     while (day < 100) : (day += 1) {
-        var diversity = std.AutoHashMap([2]i32, u8).init(allocator);
-        defer diversity.clearAndFree();
+        var around = std.AutoHashMap([2]i32, u8).init(allocator);
+        defer around.deinit();
         var ite = tiles.iterator();
         while (ite.next()) |kv| {
             const x = kv.key[0];
             const y = kv.key[1];
-            const dd = [6][2]i8 { .{1,-1}, .{-1,1}, .{1,0}, .{-1,0}, .{0,1}, .{0,-1} };
+            const dd = [6][2]i8 { .{1,0}, .{-1,0}, .{0,-1}, .{0,1}, .{1,1}, .{-1,-1} };
             var local_blacks: u8 = 0;
             for (dd) |d| {
                 const xx = x + d[0];
@@ -69,20 +69,20 @@ pub fn main() !void {
                 if (tiles.contains(.{xx,yy})) {
                     if (tiles.get(.{xx,yy}).?) {local_blacks += 1;}
                 }
-                else if (diversity.contains(.{xx,yy})) {
+                else if (around.contains(.{xx,yy})) {
                     if (kv.value) {
-                        try diversity.put(.{xx,yy}, diversity.get(.{xx,yy}).? + 1);
+                        try around.put(.{xx,yy}, around.get(.{xx,yy}).? + 1);
                     }
                 }
                 else {
-                    try diversity.put(.{xx,yy}, if (kv.value) 1 else 0);
+                    try around.put(.{xx,yy}, if (kv.value) 1 else 0);
                 }
             }
-            try diversity.put(.{x,y}, local_blacks);
+            try around.put(.{x,y}, local_blacks);
         }
 
         var new_tiles = std.AutoHashMap([2]i32, bool).init(allocator);
-        var ite2 = diversity.iterator();
+        var ite2 = around.iterator();
         while (ite2.next()) |kv| {
             const x = kv.key[0];
             const y = kv.key[1];
@@ -92,16 +92,33 @@ pub fn main() !void {
             if (ig) { try new_tiles.put(.{x,y}, ig); }
         }
         
-        tiles.clearAndFree();
+        tiles.deinit();
         tiles = new_tiles;
     }
 
+    var xmin: i32 = 0; var xmax: i32 = 0;
+    var ymin: i32 = 0; var ymax: i32 = 0;
     var gers: u32 = 0;
     var ite = tiles.iterator();
     while (ite.next()) |kv| {
+        xmin = std.math.min(xmin, kv.key[0]); xmax = std.math.max(xmax, kv.key[0]);
+        ymin = std.math.min(ymin, kv.key[1]); ymax = std.math.max(ymax, kv.key[1]);
         if (kv.value) {gers += 1;}
     }
     print("Part 2: {}\n", .{gers});
+
+    // var v: u32 = 0; while (v <= ymax - ymin) : (v += 1) {
+        // if (v % 2 == 1) {print(" ", .{});}
+        // var u: u32 = 0; while (u <= xmax - xmin) : (u += 1) {
+            // const x: i32 = xmin + @intCast(i32, u) - ymin - @intCast(i32, v);
+            // const y: i32 = ymin + @intCast(i32, v);
+            // if (tiles.get(.{x,y}) orelse false) {print("● ", .{});}
+            // else { print("  ", .{}); }
+        // }
+        // print("\n", .{});
+    // }
+    
+    
 }
 
 
