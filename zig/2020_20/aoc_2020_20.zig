@@ -20,7 +20,7 @@ pub fn read_lines(path: []const u8, allocator: *std.mem.Allocator) ![][]const u8
 const Tile = struct {
     id: u32,
     t: [][]const u8,
-    flipped: bool,
+    flip: bool,
     rot: u8,
 };
 
@@ -60,7 +60,7 @@ pub fn main() !void {
         var it = std.mem.split(tile_str, "\n");
         const line0 = it.next().?;
         const tile_id = try std.fmt.parseInt(u32, line0[5 .. line0.len-1], 10);
-        var T = Tile{ .id = tile_id, .t=undefined, .flipped = false, .rot = 0};
+        var T = Tile{ .id = tile_id, .t=undefined, .flip = false, .rot = 0};
 
         var list = std.ArrayList([]const u8).init(allocator);
         while (it.next()) |line| { try list.append(line); }
@@ -81,10 +81,7 @@ pub fn main() !void {
     }
 
     var links = std.ArrayList([]Link).init(allocator);
-    
-    var t: usize = undefined;
-    var rot: u8 = 0;
-    var flipped = false;
+    var leading_tile: usize = undefined;
     
     var answer1: u64 = 1;
     var i: usize = 0; while (i < n_tiles) : (i += 1) {
@@ -92,16 +89,12 @@ pub fn main() !void {
         var s: u8 = 0; while (s < 4) : (s += 1) {
             const side = sides.items[i][s];
             const flip = flip10(side);
-
             var j: usize = 0; while (j < n_tiles) : (j += 1) {
                 if (i == j) {continue;}
                 var ss: u8 = 0; while (ss < 4) : (ss += 1) {
-                    if (flip == sides.items[j][ss]) {
+                    if (side == sides.items[j][ss] or flip == sides.items[j][ss]) {
                         var link = Link {.other = j, .a = s, .flip = false, .b = ss};
-                        try llinks.append(link);
-                    }
-                    else if (side == sides.items[j][ss]) {
-                        var link = Link {.other = j, .a = s, .flip = true, .b = ss};
+                        link.flip = side == sides.items[j][ss];
                         try llinks.append(link);
                     }
                 }
@@ -109,88 +102,86 @@ pub fn main() !void {
         }
         if (llinks.items.len == 2) {
             answer1 *= tiles.items[i].id;
-            t = i;
-            if ((4 + llinks.items[1].a - llinks.items[0].a) % 4 == 1) {
-                rot = 0;
-                while ((llinks.items[0].a + rot) % 4 != 1) {rot += 1;}
-            }
-            else {
-                rot = 0;
-                while ((llinks.items[1].a + rot) % 4 != 1) {rot += 1;}
-                //flipped = true;
-            }
+            leading_tile = i;
         }
         try links.append(llinks.toOwnedSlice());
     }
     print("Part 1: {}\n\n", .{answer1});
-    tiles.items[t].rot = rot;
-    tiles.items[t].flipped = flipped;
-    var right_side: u8 = (4 + 1 - rot) % 4;
-    var bottom_side: u8 = (right_side + 1) % 4;
 
+    // flip and turn the last corner so its connected sides are facing right and down resp.
+    {
+        var a = links.items[leading_tile][0].a;
+        var b = links.items[leading_tile][1].a;
+        print("{} {}\n", .{a,b});
+        if ( (4 + b - a) % 4 != 1 ) {
+            tiles.items[leading_tile].flip = true;
+            if (a % 2 == 1) {a = (a + 2) % 4;}
+        }
+        tiles.items[leading_tile].rot = (4 + 1 - a) % 4;
+    }
 
-    var line_first_tile = t;
+    var t = leading_tile;
+    var right = links.items[t][0].a;
+    var down = links.items[t][1].a;
+
     var pic = std.AutoHashMap([2]usize, u8).init(allocator);
 
-    // fill the whole grid
-    // THIS WAS TEDIOUS
-    var y: usize = 0; while (y < 8*n) : (y += 8) {
+    // assemble the grid
+    var y: usize = 0; while (y < n) : (y += 1) {
 
-        // find the tile at the bottom of the current one
         if (y != 0) {
-            t = line_first_tile;
+            t = leading_tile;
             for (links.items[t]) |link| {
-                print("  --> {} {}\n", .{link, bottom_side});
-                if (link.a  == bottom_side) {
-                    var new_flip = tiles.items[t].flipped;
+                if (link.a == down) {
+                    //print("--> {}\n", .{link});
+                    var new_flip = tiles.items[t].flip;
                     if (link.flip) {new_flip = !new_flip;}
-                    var new_rot = (4 - link.b) % 4;
                     t = link.other;
-                    tiles.items[t].flipped = new_flip;
-                    tiles.items[t].rot = new_rot;
-                    bottom_side = (link.b + 2) % 4;
-                    for (links.items[t]) |link2| {
-                        if ((4 + link2.a - bottom_side) % 2 == 1) {right_side = link2.a;}
-                    }
+                    tiles.items[t].flip = new_flip;
+                    down = (link.b + 2) % 4;
+                    var target = down;
+                    if (new_flip and (target % 2 == 1)) { target = (target + 2) % 4; }
+                    tiles.items[t].rot = (4 + 2 - target) % 4;
+                    right = (4 + 1 - tiles.items[t].rot) % 4;
+                    if (new_flip and (right % 2 == 1)) { right = (right + 2) % 4;}
                     break;
                 }
             }
             else {unreachable;}
-            line_first_tile = t;
+            leading_tile = t;
         }
         
-        var x: usize = 0; while (x < 8*n) : (x += 8) {
-
-            // find the tile at the right of the current one
+        var x: usize = 0; while (x < n) : (x += 1) {
+            
             if (x != 0) {
                 for (links.items[t]) |link| {
-                    print("  --> {} {}\n", .{link, right_side});
-                    if (link.a  == right_side) {
-                        var new_flip = tiles.items[t].flipped;
+                    //print("--> {}\n", .{link});
+                    if (link.a == right) {
+                        var new_flip = tiles.items[t].flip;
                         if (link.flip) {new_flip = !new_flip;}
-                        var new_rot = (4 + 1 - link.b) % 4;
                         t = link.other;
-                        tiles.items[t].flipped = new_flip;
-                        tiles.items[t].rot = new_rot;
-                        right_side = (link.b + 2) % 4;
+                        tiles.items[t].flip = new_flip;
+                        right = (link.b + 2) % 4;
+                        var target = right;
+                        if (new_flip and (target % 2 == 1)) { target = (target + 2) % 4; }
+                        tiles.items[t].rot = (4 + 1 - target) % 4;
                         break;
                     }
                 }
                 else {unreachable;}
             }
+            print("{}: rot:{} flip:{}\n", .{t, tiles.items[t].rot, tiles.items[t].flip});
 
-            print("Tile:{} rot:{} flip:{}\n", .{t, tiles.items[t].rot, tiles.items[t].flipped});
-            
             var dx: usize = 0; while (dx < 8) : (dx += 1) {
             var dy: usize = 0; while (dy < 8) : (dy += 1) {
-                var xx = if (tiles.items[t].flipped) (7-dx) else dx; var yy = dy;
+                var xx = if (tiles.items[t].flip) (7-dx) else dx; var yy = dy;
                 var rrot = tiles.items[t].rot;
-                while (rrot > 0) : (rrot -= 1) { const temp = yy; yy = 7- xx; xx = temp; }
-                try pic.put(.{x+dx, y+dy}, tiles.items[t].t[1+yy][1+xx]);
+                while (rrot > 0) : (rrot -= 1) { const temp = xx; xx = 7- yy; yy = temp; }
+                try pic.put(.{8*x+xx, 8*y+yy}, tiles.items[t].t[1+dy][1+dx]);
             }}
         }
-        print("\n", .{});
     }
+
 
     const SEA_MONSTER = 
          \\                  # 
@@ -254,10 +245,10 @@ pub fn main() !void {
                 const WATER = grid.get(.{x,y}).?;
                 print("{c}", .{WATER});
                 if (WATER == '#') {sum += 1;}
-                if ((x+1) % 8 == 0) {print(" ", .{});}
+                //if ((x+1) % 8 == 0) {print(" ", .{});}
             }
             print("\n", .{});
-            if ((y+1) % 8 == 0) {print("\n", .{});}
+            //if ((y+1) % 8 == 0) {print("\n", .{});}
         }
         
         grid.clearAndFree();
