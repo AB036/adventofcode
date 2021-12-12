@@ -80,8 +80,6 @@ pub fn main() !void {
         if (step == 99) {print("Part 1: {}\n", .{part1});}
         if (flashes == 100) {print("Part 2: {}\n", .{step+1}); break;}
     }
-    
-    
 }
 
 
