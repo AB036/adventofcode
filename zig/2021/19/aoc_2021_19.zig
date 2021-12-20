@@ -109,17 +109,21 @@ pub fn main() !void {
     var beacons = std.AutoHashMap([3]i64, void).init(allocator);
     for (scan_data.items[0].items) |xyz| { try beacons.put(xyz, undefined); }
     
+    var tested = try allocator.alloc(bool, n*n);
+    var ii: usize = 0; while (ii < n*n) : (ii += 1) { tested[ii] = false; }
+    
     var stop = false;
     while (!stop) {
         stop = true;
         
-        var i: usize = 0; while (i < n) : (i += 1) {
+        var i: usize = 0; while (i < n) : (i += 1) {  if (!scan_found.items[i]) { continue; }
         var j: usize = 0; while (j < n) : (j += 1) {
             if (i == j) { continue; }
-            if (!scan_found.items[i]) { continue; }
+            if (tested[n*i + j]) { continue; }
             if (scan_found.items[j]) { continue; }
             
             const m = try match(scan_data.items[i].items, scan_data.items[j].items, allocator);
+            tested[n*i + j] = true;
             const res = m orelse continue;
             
             scan_found.items[j] = true;
